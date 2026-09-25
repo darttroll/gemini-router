@@ -1,0 +1,29 @@
+# Build output
+/dist/
+/gemini-router
+*.test
+*.out
+coverage.*
+
+# Runtime state
+*.db
+*.db-shm
+*.db-wal
+/logs/
+/artifacts/
+
+# Local configuration and credentials
+config.yaml
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local worktrees and scratch space
+.worktrees/
+.tmp/
+tmp/

@@ -1,0 +1,54 @@
+agy_path: "/usr/local/bin/agy"
+data_dir: "/var/lib/gemini-router"
+
+# Retry count is independent from provider pacing and concurrency control.
+balancer:
+  max_retries: 3
+
+queue:
+  max_delay: 10s
+  max_depth: 1000
+  poll_interval: 100ms
+
+adaptive:
+  min_rate: 0.2
+  initial_rate: 2.0
+  max_rate: 100.0
+  rate_burst: 3
+  cubic_beta: 0.7
+  cubic_c: 0.4
+  rate_window_successes: 5
+  initial_concurrency: 4
+  max_concurrency: 32
+  concurrency_window: 10
+  retry_budget_capacity: 10
+  retry_budget_refill_per_sec: 0.1
+
+quota:
+  # Uses `agy -p "/quota" --output-format json`; this is a read-only quota query
+  # and does not create an agent turn or consume model quota.
+  enabled: true
+  refresh_interval: 5m
+  low_remaining_interval: 30s
+  low_remaining_threshold: 0.10
+  command_timeout: 10s
+
+default_model: "gemini-3.6-flash-high"
+request_timeout: 5m
+
+logging:
+  # Prompts can contain source code or private data; keep previews off unless needed.
+  prompt_preview: false
+
+workers:
+  - username: gemini_a
+    enabled: true
+    agy_path: "/home/gemini_a/.local/bin/agy"
+  - username: gemini_b
+    enabled: false
+    agy_path: "/home/gemini_b/.local/bin/agy"
+    # Set false for a provider/CLI that does not support the /quota command.
+    # quota_enabled: false
+  - username: gemini_c
+    enabled: true
+    agy_path: "/home/gemini_c/.local/bin/agy"
