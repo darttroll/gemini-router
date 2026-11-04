@@ -134,6 +134,7 @@ func (c *QuotaCommand) writeJSON(w io.Writer, rowsByWorker map[string][]storage.
 		if err, ok := refreshErrors[worker.Username]; ok {
 			provider.RefreshError = err.Error()
 		}
+		telemetryDisabled := !worker.Enabled || !c.cfg.QuotaEnabledFor(worker.Username)
 		byKey := quotaRowIndex(rowsByWorker[worker.Username])
 		for _, col := range columns {
 			row, ok := byKey[quotaKey(col.GroupKey, col.Window)]
@@ -145,7 +146,7 @@ func (c *QuotaCommand) writeJSON(w io.Writer, rowsByWorker map[string][]storage.
 				GroupName:         row.GroupName,
 				Window:            row.Window,
 				RemainingFraction: row.RemainingFraction,
-				Disabled:          row.Disabled,
+				Disabled:          row.Disabled || telemetryDisabled,
 				RefreshedAt:       row.FetchedAt.Format(time.RFC3339Nano),
 			}
 			if !row.ResetTime.IsZero() {

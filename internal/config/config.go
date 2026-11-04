@@ -38,8 +38,15 @@ type WorkerConfig struct {
 }
 
 // BalancerConfig contains retry-related compatibility settings.
+// Older deployments may still have the legacy cooldown/rate-limit keys in YAML.
+// Accept their original types without applying the obsolete scheduler knobs;
+// the adaptive controller owns these policies now.
 type BalancerConfig struct {
-	MaxRetries *int `yaml:"max_retries"`
+	MaxRetries          *int     `yaml:"max_retries"`
+	CooldownDurationRaw Duration `yaml:"cooldown_duration"`
+	MaxCooldownRaw      Duration `yaml:"max_cooldown"`
+	RateLimitThreshold  int      `yaml:"rate_limit_threshold"`
+	RateLimitWindowRaw  Duration `yaml:"rate_limit_window"`
 }
 
 // QueueConfig describes queue admission settings as represented in YAML.

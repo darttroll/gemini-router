@@ -163,3 +163,41 @@ func lineContaining(s, needle string) string {
 	}
 	return ""
 }
+
+// Configuration is authoritative even when SQLite still contains snapshots
+// acquired before a worker or its quota telemetry was disabled.
+func TestQuotaCommandJSONMarksDisabledWorkersWithStaleCache(t *testing.T) {
+	cmd, store := setupQuotaTest(t)
+	cmd.quotaSvc = nil // cached-only fixture; no provider calls
+	cmd.cfg.Workers[1].Enabled = false
+	now := time.Now().UTC()
+	for _, worker := range []string{"bob", "carol"} {
+		if err := store.ReplaceQuotaSnapshots(worker, []storage.QuotaSnapshot{{
+			Worker: worker, GroupKey: "gemini", GroupName: "Gemini Models", Window: "weekly",
+			RemainingFraction: 0.91, Disabled: false, ResetTime: now.Add(24 * time.Hour), FetchedAt: now.Add(-72 * time.Hour),
+		}}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var buf bytes.Buffer
+	if err := cmd.Run(&buf, true); err != nil {
+		t.Fatal(err)
+	}
+	var report QuotaJSONReport
+	if err := json.Unmarshal(buf.Bytes(), &report); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	seen := map[string]bool{}
+	for _, provider := range report.Providers {
+		if provider.Worker != "bob" && provider.Worker != "carol" {
+			continue
+		}
+		if len(provider.Quotas) != 1 || !provider.Quotas[0].Disabled {
+			t.Fatalf("%s disabled config must override stale cached quota: %+v", provider.Worker, provider.Quotas)
+		}
+		seen[provider.Worker] = true
+	}
+	if !seen["bob"] || !seen["carol"] {
+		t.Fatalf("missing disabled providers in JSON: %+v", report.Providers)
+	}
+}

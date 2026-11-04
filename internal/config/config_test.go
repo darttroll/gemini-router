@@ -372,3 +372,31 @@ func TestLoadConfigRejectsNonPositiveRequestTimeout(t *testing.T) {
 		})
 	}
 }
+
+// Legacy keys must remain loadable so an existing production config can be
+// reused unchanged while switching binaries (including during rollback).
+func TestLoadConfig_AcceptsLegacyBalancerKeys(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	text := `agy_path: "/usr/bin/agy"
+data_dir: "/var/lib/gemini-router"
+balancer:
+  cooldown_duration: 60s
+  max_cooldown: 10m
+  max_retries: 4
+  rate_limit_threshold: 18
+  rate_limit_window: 1m
+workers:
+  - username: alice
+    enabled: true
+`
+	if err := os.WriteFile(path, []byte(text), 0600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("legacy production config rejected: %v", err)
+	}
+	if cfg.Balancer.MaxRetries != 4 || cfg.BalancerRaw.CooldownDurationRaw.Duration != time.Minute || cfg.BalancerRaw.MaxCooldownRaw.Duration != 10*time.Minute || cfg.BalancerRaw.RateLimitThreshold != 18 || cfg.BalancerRaw.RateLimitWindowRaw.Duration != time.Minute {
+		t.Fatalf("legacy balancer values incorrectly parsed: %+v", cfg.BalancerRaw)
+	}
+}
