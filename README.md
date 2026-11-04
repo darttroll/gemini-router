@@ -96,7 +96,7 @@ For the full control flow and failure model, see [Architecture](docs/architectur
 ## Requirements
 
 - Linux
-- Go **1.25.14 or newer** to build from source
+- Go **1.26.0 or newer** to build from source
 - a local filesystem suitable for SQLite WAL
 - root access for the supported deployment model
 - one authenticated Antigravity CLI installation per enabled Linux worker

@@ -5,7 +5,7 @@
 Requirements:
 
 - Linux;
-- Go 1.25.14 or newer;
+- Go 1.26.0 or newer;
 - SQLite support provided by the pure-Go `modernc.org/sqlite` dependency.
 
 Normal unit tests do not need real provider credentials.
